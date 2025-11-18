@@ -757,7 +757,7 @@
           <span class="pill-dot"></span>
           <span>Live for Thane · Maharashtra · India</span>
         </div>
-        <span class="small">Default printer: Bambu Lab P1S · Avg power: 230&nbsp;W</span>
+        <span class="small">Default printer: Bambu Lab P1S · Avg power: 350&nbsp;W</span>
       </div>
     </header>
 
@@ -842,7 +842,7 @@
             <div class="field">
               <label><span>Printer power (avg)</span></label>
               <div class="input-wrap">
-                <input id="printerPowerWatts" type="number" min="0" step="10" value="230" />
+                <input id="printerPowerWatts" type="number" min="0" step="10" value="350" />
                 <span class="unit">W</span>
               </div>
               <small>Approximate average for Bambu P1S.</small>
@@ -1283,7 +1283,7 @@
     list.appendChild(newRow);
   }
 
-  // Batmobile preset (placeholder values – replace with your real 6‑plate data)
+  // Batmobile preset with actual values from your screenshots
   function loadBatmobilePreset() {
     const list = document.getElementById("platesList");
     list.innerHTML = "";
@@ -1293,12 +1293,12 @@
     document.getElementById("filamentType").value = "PLA";
 
     const presetPlates = [
-      { name: "Batmobile Plate 1", time: 45, unit: "min", filament: 65 },
-      { name: "Batmobile Plate 2", time: 50, unit: "min", filament: 70 },
-      { name: "Batmobile Plate 3", time: 40, unit: "min", filament: 60 },
-      { name: "Batmobile Plate 4", time: 35, unit: "min", filament: 55 },
-      { name: "Batmobile Plate 5", time: 30, unit: "min", filament: 50 },
-      { name: "Batmobile Plate 6", time: 25, unit: "min", filament: 45 }
+      { name: "Batmobile Plate 1", time: 29,   unit: "min", filament: 2.91 },
+      { name: "Batmobile Plate 2", time: 1.27, unit: "hr",  filament: 17.89 },
+      { name: "Batmobile Plate 3", time: 10.5, unit: "min", filament: 0.50 },
+      { name: "Batmobile Plate 4", time: 7.25, unit: "hr",  filament: 112.71 },
+      { name: "Batmobile Plate 5", time: 4.41, unit: "hr",  filament: 70.24 },
+      { name: "Batmobile Plate 6", time: 51.4, unit: "min", filament: 9.39 }
     ];
 
     presetPlates.forEach(p => {
