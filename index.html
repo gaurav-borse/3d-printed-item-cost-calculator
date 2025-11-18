@@ -1,1 +1,1374 @@
-<h1>Hello</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>3D Print Cost Calculator · Bambu P1S</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Fonts for premium, bold look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #020015;
+      --card-bg: rgba(6, 7, 31, 0.92);
+      --accent: #a855ff;
+      --accent-soft: #7c3aed;
+      --accent-btn: #ec4899;
+      --accent-btn-hover: #fb7185;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --border-subtle: rgba(148, 163, 184, 0.35);
+      --radius-lg: 24px;
+      --radius-md: 14px;
+      --shadow-soft: 0 30px 60px rgba(0, 0, 0, 0.75);
+      --font-heading: "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      --font-body: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--text-main);
+      background: radial-gradient(circle at top, #1e1b4b 0, #020015 45%, #020617 100%);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Background grid + orbs */
+    .background-grid {
+      position: absolute;
+      inset: -10%;
+      background-image:
+        radial-gradient(circle at 10% 10%, rgba(168, 85, 247, 0.15), transparent 55%),
+        radial-gradient(circle at 90% 70%, rgba(236, 72, 153, 0.22), transparent 55%),
+        radial-gradient(circle at 0% 80%, rgba(56, 189, 248, 0.16), transparent 55%),
+        radial-gradient(circle at 110% -10%, rgba(59, 130, 246, 0.32), transparent 55%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .grid-lines {
+      position: absolute;
+      inset: 5%;
+      background-image:
+        radial-gradient(circle at center, transparent 0, transparent 35%, rgba(15, 23, 42, 0.8) 100%),
+        repeating-radial-gradient(circle at center, rgba(15, 23, 42, 0) 0, rgba(15, 23, 42, 0) 8px, rgba(31, 41, 55, 0.5) 9px, rgba(31, 41, 55, 0.5) 10px);
+      mix-blend-mode: screen;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 20%, rgba(248, 250, 252, 0.9), rgba(59, 130, 246, 0.3), rgba(15, 23, 42, 0.0));
+      box-shadow: 0 0 40px rgba(129, 140, 248, 0.5);
+      opacity: 0.75;
+      pointer-events: none;
+    }
+    .orb.orb-1 { width: 360px; height: 360px; top: -120px; right: -80px; }
+    .orb.orb-2 { width: 320px; height: 320px; bottom: -140px; left: -80px; opacity: 0.6; }
+    .orb.orb-3 { width: 220px; height: 220px; top: 55%; left: 55%; opacity: 0.35; }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 1200px;
+      background: radial-gradient(circle at top, rgba(148, 163, 184, 0.1), transparent 60%),
+                  rgba(3, 7, 31, 0.94);
+      border-radius: 28px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: var(--shadow-soft);
+      padding: 20px 22px 18px;
+      backdrop-filter: blur(16px);
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        border-radius: 20px;
+        padding: 16px 14px 14px;
+      }
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    @media (max-width: 840px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .brand-label {
+      font-family: var(--font-heading);
+      font-size: 13px;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+
+    .brand-label span {
+      color: var(--accent);
+    }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(28px, 3.1vw, 34px);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .hero-subtitle {
+      margin: 4px 0 0;
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 560px;
+      line-height: 1.6;
+    }
+
+    .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.92);
+    }
+
+    .pill-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 16px rgba(34, 197, 94, 0.9);
+    }
+
+    .meta span.small {
+      font-size: 11px;
+    }
+
+    main {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 2fr 1.6fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 980px) {
+      main { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-subtle);
+      padding: 14px 14px 12px;
+    }
+
+    .panel-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .panel-title {
+      font-family: var(--font-heading);
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #e5e7eb;
+    }
+
+    .panel-tag {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--text-muted);
+    }
+
+    .panel-desc {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .section {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(31, 41, 55, 0.9);
+    }
+
+    .section:first-of-type {
+      margin-top: 4px;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .section-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    @media (max-width: 780px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field label {
+      font-size: 13px;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .field small {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 9px 12px;
+      padding-right: 46px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: #020617;
+      color: var(--text-main);
+      font-size: 14px;
+      outline: none;
+    }
+
+    input::placeholder { color: #4b5563; }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.6);
+    }
+
+    .unit {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    select {
+      padding-right: 34px;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%), linear-gradient(135deg, #6b7280 50%, transparent 50%);
+      background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+    }
+
+    .range-wrapper { margin-top: 4px; }
+
+    input[type="range"] {
+      width: 100%;
+      appearance: none;
+      height: 4px;
+      border-radius: 999px;
+      background: #111827;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: var(--accent-alt);
+      border: 2px solid #020617;
+      cursor: pointer;
+      margin-top: -6px;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: var(--accent-alt);
+      border: 2px solid #020617;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track,
+    input[type="range"]::-moz-range-track {
+      height: 4px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #2563eb, #ec4899);
+    }
+
+    .toggle-row {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .toggle {
+      width: 40px;
+      height: 22px;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px solid rgba(31, 41, 55, 1);
+      display: inline-flex;
+      align-items: center;
+      padding: 2px;
+      cursor: pointer;
+    }
+
+    .toggle-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      background: #4b5563;
+      transform: translateX(0);
+      transition: transform 140ms ease-out, background 140ms ease-out;
+    }
+
+    .toggle.on {
+      background: rgba(34, 197, 94, 0.18);
+      border-color: var(--accent-alt);
+    }
+
+    .toggle.on .toggle-thumb {
+      transform: translateX(18px);
+      background: var(--accent-alt);
+    }
+
+    .note {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .note strong { color: #e5e7eb; }
+
+    /* Plates */
+    .plates-card {
+      margin-top: 8px;
+      border-radius: 16px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      padding: 10px 9px 7px;
+      background: #020617;
+    }
+
+    .plates-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .plates-header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .plates-header-left span.title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .plates-header-left span.sub {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .plates-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: 1px solid rgba(37, 99, 235, 0.6);
+      background: #020617;
+      color: var(--text-main);
+      font-size: 12px;
+      padding: 6px 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn.primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--accent-btn), var(--accent));
+      color: #f9fafb;
+    }
+
+    .btn.primary:hover {
+      background: linear-gradient(135deg, var(--accent-btn-hover), var(--accent-soft));
+    }
+
+    .btn:hover:not(.primary) {
+      border-color: var(--accent);
+    }
+
+    .plates-list {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 3px;
+    }
+
+    .plate-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) minmax(0, 0.9fr) auto;
+      gap: 6px;
+      align-items: center;
+      padding: 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: #020617;
+    }
+
+    @media (max-width: 640px) {
+      .plate-row {
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+        grid-template-rows: auto auto;
+      }
+      .plate-time-group { grid-column: 1 / span 1; }
+      .plate-filament-group { grid-column: 2 / span 1; }
+      .plate-remove-btn { grid-column: 2 / span 1; justify-self: flex-end; }
+    }
+
+    .plate-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .plate-name-input,
+    .plate-number-input,
+    .plate-time-unit {
+      border-radius: 8px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: #020617;
+      color: var(--text-main);
+      font-size: 12px;
+      padding: 6px 7px;
+      width: 100%;
+      outline: none;
+    }
+
+    .plate-inline {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 4px;
+    }
+
+    .plate-inline .plate-number-input {
+      width: 100%;
+    }
+
+    .plate-time-unit {
+      -webkit-appearance: none;
+      appearance: none;
+      padding-right: 18px;
+      width: 64px;
+      background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%), linear-gradient(135deg, #6b7280 50%, transparent 50%);
+      background-position: calc(100% - 10px) 50%, calc(100% - 6px) 50%;
+      background-size: 4px 4px, 4px 4px;
+      background-repeat: no-repeat;
+    }
+
+    .plate-remove-btn {
+      border-radius: 999px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: #020617;
+      color: #9ca3af;
+      font-size: 12px;
+      padding: 4px 7px;
+      cursor: pointer;
+    }
+
+    .plate-remove-btn:hover {
+      border-color: #ef4444;
+      color: #fecaca;
+    }
+
+    .plates-footer {
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .badge-soft {
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(31, 41, 55, 0.95);
+      background: #020617;
+      font-size: 11px;
+      color: #e5e7eb;
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    /* Summary */
+    .summary-pill {
+      margin-top: 4px;
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: radial-gradient(circle at top, rgba(30, 64, 175, 0.4), transparent 55%),
+                  #020617;
+      padding: 14px 13px 12px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.95);
+    }
+
+    .summary-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .summary-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .summary-main {
+      margin-top: 8px;
+      font-size: 32px;
+      font-weight: 700;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .summary-main span.currency {
+      font-size: 18px;
+      color: #e5e7eb;
+    }
+
+    .summary-main span.value {
+      color: #facc15;
+    }
+
+    .summary-main span.suffix {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .summary-chip {
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--accent-alt);
+      background: rgba(22, 163, 74, 0.15);
+      font-size: 12px;
+      color: #bbf7d0;
+      white-space: nowrap;
+    }
+
+    .summary-sub {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .summary-grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+    }
+
+    .summary-item strong { color: #e5e7eb; }
+
+    .summary-extra {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+    }
+
+    .actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .actions .btn { flex: 1; justify-content: center; }
+
+    .small-note {
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    ul {
+      margin: 4px 0 0 18px;
+      padding: 0;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid #020617;
+      padding: 10px 16px 14px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: #020015;
+    }
+
+    footer a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="background-grid">
+    <div class="grid-lines"></div>
+  </div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="brand-label">3D PRINTING <span>BUSINESS</span></div>
+        <h1 class="hero-title">PRICE YOUR CREATIVE WAVE</h1>
+        <p class="hero-subtitle">
+          Turn Bambu P1S slicer data into clean, profitable prices. Enter your print details once
+          and get a premium, repeatable pricing workflow for every keychain, car model, and vase.
+        </p>
+      </div>
+      <div class="meta">
+        <div class="pill">
+          <span class="pill-dot"></span>
+          <span>Live for Thane · Maharashtra · India</span>
+        </div>
+        <span class="small">Default printer: Bambu Lab P1S · Avg power: 230&nbsp;W</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- LEFT: INPUTS -->
+      <section class="panel">
+        <div class="panel-title-row">
+          <div class="panel-title">Inputs</div>
+          <div class="panel-tag">Cost basis</div>
+        </div>
+        <p class="panel-desc">Fill these in order. Use the plates section if a job has multiple plates.</p>
+
+        <!-- BASIC -->
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">Basic</div>
+              <div class="section-sub">Item name and material</div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>
+                <span>Print name</span>
+                <small>Optional</small>
+              </label>
+              <div class="input-wrap">
+                <input id="printName" type="text" placeholder="e.g. Batmobile Keychain" />
+              </div>
+            </div>
+            <div class="field">
+              <label><span>Filament type</span></label>
+              <div class="input-wrap">
+                <select id="filamentType">
+                  <option value="PLA" selected>PLA</option>
+                  <option value="PETG">PETG</option>
+                  <option value="ABS">ABS</option>
+                  <option value="TPU">TPU</option>
+                  <option value="Resin">Resin (SLA/DLP)</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MATERIAL & TIME -->
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">Material & Time</div>
+              <div class="section-sub">Totals for the full job</div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label><span>Filament cost per kg</span></label>
+              <div class="input-wrap">
+                <input id="filamentCostPerKg" type="number" min="0" step="1" value="1200" />
+                <span class="unit">₹/kg</span>
+              </div>
+              <small>Your average filament price.</small>
+            </div>
+            <div class="field">
+              <label><span>Filament used (total)</span></label>
+              <div class="input-wrap">
+                <input id="filamentUsedGrams" type="number" min="0" step="0.1" value="25" />
+                <span class="unit">g</span>
+              </div>
+              <small>From slicer or auto-filled by plates.</small>
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top: 8px;">
+            <div class="field">
+              <label><span>Print time (total)</span></label>
+              <div class="input-wrap">
+                <input id="printTimeHours" type="number" min="0" step="0.1" value="3.5" />
+                <span class="unit">hrs</span>
+              </div>
+              <small>From slicer or auto-filled by plates.</small>
+            </div>
+            <div class="field">
+              <label><span>Printer power (avg)</span></label>
+              <div class="input-wrap">
+                <input id="printerPowerWatts" type="number" min="0" step="10" value="230" />
+                <span class="unit">W</span>
+              </div>
+              <small>Approximate average for Bambu P1S.</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- RATE & MARGIN -->
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">Power & Margin</div>
+              <div class="section-sub">Electricity and profit</div>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label><span>Electricity rate</span></label>
+              <div class="input-wrap">
+                <input id="electricityRate" type="number" min="0" step="0.1" value="11.0" />
+                <span class="unit">₹/kWh</span>
+              </div>
+              <small>Effective rate from your Thane bill.</small>
+            </div>
+            <div class="field">
+              <label><span>Profit margin</span></label>
+              <div class="input-wrap">
+                <input id="profitMargin" type="number" min="0" max="300" step="1" value="60" />
+                <span class="unit">%</span>
+              </div>
+              <div class="range-wrapper">
+                <input id="profitMarginRange" type="range" min="0" max="200" step="5" value="60" />
+              </div>
+              <small>Markup over your total cost.</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- PLATES -->
+        <div class="section">
+          <div class="plates-card">
+            <div class="plates-header">
+              <div class="plates-header-left">
+                <span class="title">Plates (optional)</span>
+                <span class="sub">Use when this job is split across multiple plates.</span>
+              </div>
+              <div class="plates-actions">
+                <button id="loadBatmobilePresetBtn" class="btn primary" type="button">
+                  Batmobile preset
+                </button>
+                <button id="addPlateBtn" class="btn" type="button">
+                  + Add plate
+                </button>
+              </div>
+            </div>
+            <div class="plates-list" id="platesList"></div>
+            <div class="plates-footer">
+              <div>
+                <span class="badge-soft">
+                  <span>Total time:</span>
+                  <span id="totalPlatesTimeLabel">0 hr (0 min)</span>
+                </span>
+                <span class="badge-soft" style="margin-left: 6px;">
+                  <span>Total filament:</span>
+                  <span id="totalPlatesFilamentLabel">0 g</span>
+                </span>
+              </div>
+              <div>These totals override the main time & filament fields.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EXTRAS -->
+        <div class="section">
+          <div class="section-head">
+            <div>
+              <div class="section-title">Extras</div>
+              <div class="section-sub">Additional per-job costs</div>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="field">
+              <label><span>Labour (info only)</span></label>
+              <div class="input-wrap">
+                <input id="laborRatePerHour" type="number" min="0" step="10" value="0" />
+                <span class="unit">₹/hr</span>
+              </div>
+              <small>Not charged, just reference.</small>
+            </div>
+            <div class="field">
+              <label><span>Labour time</span></label>
+              <div class="input-wrap">
+                <input id="laborHours" type="number" value="0" readonly />
+                <span class="unit">hr</span>
+              </div>
+              <small>Disabled (always 0).</small>
+            </div>
+            <div class="field">
+              <label><span>Extra costs</span></label>
+              <div class="input-wrap">
+                <input id="extraCosts" type="number" min="0" step="1" value="15" />
+                <span class="unit">₹</span>
+              </div>
+              <small>Packaging, branding, etc.</small>
+            </div>
+          </div>
+
+          <div class="toggle-row">
+            <span>Hide electricity as a separate line (treat as generic overhead).</span>
+            <div id="toggleIncludeElectricity" class="toggle">
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+
+          <div class="note">
+            <strong>Note:</strong> Labour time is not included in cost. Only material, electricity, and extras are billed.
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: SUMMARY -->
+      <section class="panel">
+        <div class="panel-title-row">
+          <div class="panel-title">Summary</div>
+          <div class="panel-tag">Per item</div>
+        </div>
+        <p class="panel-desc">Your numbers update automatically as you type.</p>
+
+        <div class="summary-pill">
+          <div class="summary-top">
+            <div>
+              <div class="summary-label">
+                Item: <strong id="itemNameChip">Per item</strong> · Printer: Bambu P1S
+              </div>
+              <div class="summary-main">
+                <span class="currency">₹</span>
+                <span class="value" id="sellingPrice">0</span>
+                <span class="suffix">recommended</span>
+              </div>
+            </div>
+            <div class="summary-chip">
+              Margin: <span id="marginChip">0%</span>
+            </div>
+          </div>
+          <div class="summary-sub" id="profitInfo">
+            Set your profit margin to see a suggested selling price.
+          </div>
+
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span>Base cost (no profit)</span>
+              <strong>₹<span id="baseCost">0</span></strong>
+            </div>
+            <div class="summary-item">
+              <span>Profit amount</span>
+              <strong>₹<span id="profitAmount">0</span></strong>
+            </div>
+            <div class="summary-item">
+              <span>Material</span>
+              <strong>₹<span id="matCost">0</span></strong>
+            </div>
+            <div class="summary-item">
+              <span>Electricity</span>
+              <strong>₹<span id="elecCost">0</span></strong>
+            </div>
+            <div class="summary-item">
+              <span>Extras</span>
+              <strong>₹<span id="labExtraCost">0</span></strong>
+            </div>
+            <div class="summary-item">
+              <span>Total cost</span>
+              <strong>₹<span id="baseCostDup">0</span></strong>
+            </div>
+          </div>
+
+          <div class="summary-extra">
+            <div>Cost per gram: <strong>₹<span id="costPerGram">0</span></strong></div>
+            <div>Cost per print hour: <strong>₹<span id="costPerHour">0</span></strong></div>
+          </div>
+
+          <div class="actions">
+            <button id="roundPriceBtn" class="btn" type="button">
+              Round to nearest ₹10
+            </button>
+            <button id="copySummaryBtn" class="btn primary" type="button">
+              Copy quote
+            </button>
+          </div>
+        </div>
+
+        <div class="small-note">
+          To keep electricity rate accurate:
+          <ul>
+            <li>Take total energy charge and units (kWh) from your bill.</li>
+            <li>Divide charge by units to get ₹/kWh.</li>
+            <li>Enter that in “Electricity rate” and update when tariffs change.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<footer>
+  © 2025 Gaurav Borse. All rights reserved. ·
+  <a href="https://gauravborse.com" target="_blank" rel="noopener noreferrer">gauravborse.com</a>
+</footer>
+
+<script>
+  function rupees(x) {
+    if (!isFinite(x)) return "0";
+    return x.toFixed(2).replace(/\.00$/, "");
+  }
+
+  function getNumber(id) {
+    const el = document.getElementById(id);
+    const v = parseFloat(el.value);
+    return isNaN(v) ? 0 : v;
+  }
+
+  function setText(id, value) {
+    document.getElementById(id).textContent = value;
+  }
+
+  let includeElectricityInLabor = false;
+
+  function recalc() {
+    const filamentCostPerKg = getNumber("filamentCostPerKg");
+    const filamentUsedGrams = getNumber("filamentUsedGrams");
+    const printTimeHours = getNumber("printTimeHours");
+    const printerPowerWatts = getNumber("printerPowerWatts");
+    const electricityRate = getNumber("electricityRate");
+    const profitMargin = getNumber("profitMargin");
+    const extraCosts = getNumber("extraCosts");
+
+    const filamentCost = (filamentUsedGrams / 1000) * filamentCostPerKg;
+
+    let kwhUsed = (printerPowerWatts * printTimeHours) / 1000;
+    if (!isFinite(kwhUsed) || kwhUsed < 0) kwhUsed = 0;
+    let electricityCost = kwhUsed * electricityRate;
+
+    if (includeElectricityInLabor) {
+      electricityCost = 0;
+    }
+
+    const baseCost = filamentCost + electricityCost + extraCosts;
+    const profitAmount = baseCost * (profitMargin / 100);
+    const sellingPrice = baseCost + profitAmount;
+
+    const costPerGram = filamentUsedGrams > 0 ? baseCost / filamentUsedGrams : 0;
+    const costPerHour = printTimeHours > 0 ? baseCost / printTimeHours : 0;
+
+    setText("matCost", rupees(filamentCost));
+    setText("elecCost", rupees(electricityCost));
+    setText("labExtraCost", rupees(extraCosts));
+    setText("baseCost", rupees(baseCost));
+    setText("baseCostDup", rupees(baseCost));
+    setText("profitAmount", rupees(profitAmount));
+    setText("sellingPrice", rupees(sellingPrice));
+    setText("costPerGram", rupees(costPerGram));
+    setText("costPerHour", rupees(costPerHour));
+    setText("marginChip", profitMargin + "%");
+
+    const printName = document.getElementById("printName").value.trim();
+    const filamentType = document.getElementById("filamentType").value;
+    if (printName) {
+      document.getElementById("itemNameChip").textContent = printName;
+      document.getElementById("profitInfo").textContent =
+        'Pricing for "' + printName + '" using ' + filamentType +
+        " at " + profitMargin + "% margin.";
+    } else {
+      document.getElementById("itemNameChip").textContent = "Per item";
+      document.getElementById("profitInfo").textContent =
+        "Set your profit margin to see a suggested selling price.";
+    }
+  }
+
+  function roundPrice() {
+    const currentText = document.getElementById("sellingPrice").textContent;
+    const current = parseFloat(currentText.replace(/[^\d.]/g, ""));
+    if (!isFinite(current)) return;
+    const rounded = Math.round(current / 10) * 10 || 0;
+    setText("sellingPrice", rupees(rounded));
+  }
+
+  function copySummary() {
+    const printName = document.getElementById("printName").value.trim() || "3D Printed Item";
+    const filamentType = document.getElementById("filamentType").value;
+    const filamentCostPerKg = getNumber("filamentCostPerKg");
+    const filamentUsedGrams = getNumber("filamentUsedGrams");
+    const printTimeHours = getNumber("printTimeHours");
+    const printerPowerWatts = getNumber("printerPowerWatts");
+    const electricityRate = getNumber("electricityRate");
+    const profitMargin = getNumber("profitMargin");
+    const extraCosts = getNumber("extraCosts");
+
+    const baseCost = parseFloat(document.getElementById("baseCost").textContent.replace(/[^\d.]/g, "")) || 0;
+    const profitAmount = parseFloat(document.getElementById("profitAmount").textContent.replace(/[^\d.]/g, "")) || 0;
+    const sellingPrice = parseFloat(document.getElementById("sellingPrice").textContent.replace(/[^\d.]/g, "")) || 0;
+    const matCost = document.getElementById("matCost").textContent;
+    const elecCost = document.getElementById("elecCost").textContent;
+    const labExtraCost = document.getElementById("labExtraCost").textContent;
+    const costPerGram = document.getElementById("costPerGram").textContent;
+    const costPerHour = document.getElementById("costPerHour").textContent;
+
+    const lines = [
+      `Quote for: ${printName}`,
+      ``,
+      `Printer: Bambu Lab P1S`,
+      ``,
+      `Print settings:`,
+      `• Filament type: ${filamentType}`,
+      `• Filament cost: ₹${rupees(filamentCostPerKg)}/kg`,
+      `• Filament used (total): ${filamentUsedGrams} g`,
+      `• Print time (total): ${printTimeHours} h @ ${printerPowerWatts} W`,
+      `• Electricity rate (Thane): ₹${rupees(electricityRate)}/kWh`,
+      ``,
+      `Cost breakdown:`,
+      `• Material: ₹${matCost}`,
+      includeElectricityInLabor ? `• Electricity: included in overhead` : `• Electricity: ₹${elecCost}`,
+      `• Extras: ₹${labExtraCost}`,
+      `• Base cost (no profit): ₹${rupees(baseCost)}`,
+      ``,
+      `Pricing:`,
+      `• Profit margin: ${profitMargin}% (₹${rupees(profitAmount)})`,
+      `• Recommended selling price: ₹${rupees(sellingPrice)}`,
+      ``,
+      `Efficiency:`,
+      `• Cost per gram: ₹${costPerGram}`,
+      `• Cost per print hour: ₹${costPerHour}`,
+      ``,
+      `Generated by 3D Print Cost Calculator (Bambu Lab P1S)`
+    ];
+
+    const text = lines.join("\n");
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById("copySummaryBtn");
+      const original = btn.textContent;
+      btn.textContent = "Copied!";
+      setTimeout(() => (btn.textContent = original), 1600);
+    }).catch(() => {});
+  }
+
+  // Plates Aggregator
+  let plateIdCounter = 1;
+
+  function createPlateRow(id) {
+    const row = document.createElement("div");
+    row.className = "plate-row";
+    row.dataset.plateId = id;
+
+    row.innerHTML = `
+      <div>
+        <div class="plate-label">Plate name</div>
+        <input class="plate-name-input" type="text" placeholder="Plate ${id}" />
+      </div>
+      <div class="plate-time-group">
+        <div class="plate-label">Time</div>
+        <div class="plate-inline">
+          <input class="plate-number-input plate-time-value" type="number" min="0" step="0.1" placeholder="e.g. 9.5" />
+          <select class="plate-time-unit">
+            <option value="min">min</option>
+            <option value="hr">hr</option>
+          </select>
+        </div>
+      </div>
+      <div class="plate-filament-group">
+        <div class="plate-label">Filament (g)</div>
+        <input class="plate-number-input plate-filament-value" type="number" min="0" step="0.1" placeholder="e.g. 23" />
+      </div>
+      <button class="plate-remove-btn plate-remove-btn-actual" type="button">✕</button>
+    `;
+
+    const inputs = row.querySelectorAll("input, select");
+    inputs.forEach(el => {
+      el.addEventListener("input", updatePlatesTotals);
+      el.addEventListener("change", updatePlatesTotals);
+    });
+
+    const removeBtn = row.querySelector(".plate-remove-btn-actual");
+    removeBtn.addEventListener("click", () => {
+      row.remove();
+      updatePlatesTotals();
+    });
+
+    return row;
+  }
+
+  function updatePlatesTotals() {
+    const list = document.getElementById("platesList");
+    const rows = Array.from(list.querySelectorAll(".plate-row"));
+
+    let totalMinutes = 0;
+    let totalFilament = 0;
+
+    rows.forEach(row => {
+      const timeInput = row.querySelector(".plate-time-value");
+      const unitSelect = row.querySelector(".plate-time-unit");
+      const filamentInput = row.querySelector(".plate-filament-value");
+
+      const timeVal = parseFloat(timeInput.value);
+      const filamentVal = parseFloat(filamentInput.value);
+
+      if (!isNaN(timeVal) && timeVal > 0) {
+        totalMinutes += unitSelect.value === "hr" ? timeVal * 60 : timeVal;
+      }
+
+      if (!isNaN(filamentVal) && filamentVal > 0) {
+        totalFilament += filamentVal;
+      }
+    });
+
+    const totalHours = totalMinutes / 60;
+    const hoursWhole = Math.floor(totalMinutes / 60);
+    const minsRem = Math.round(totalMinutes % 60);
+
+    const timeLabel = totalMinutes > 0
+      ? `${rupees(totalHours)} hr (${hoursWhole} h ${minsRem} min)`
+      : "0 hr (0 min)";
+
+    document.getElementById("totalPlatesTimeLabel").textContent = timeLabel;
+    document.getElementById("totalPlatesFilamentLabel").textContent =
+      totalFilament > 0 ? `${rupees(totalFilament)} g` : "0 g";
+
+    if (totalMinutes > 0) {
+      document.getElementById("printTimeHours").value = (totalMinutes / 60).toFixed(2);
+    }
+    if (totalFilament > 0) {
+      document.getElementById("filamentUsedGrams").value = totalFilament.toFixed(2);
+    }
+
+    recalc();
+  }
+
+  function addPlateRow() {
+    const list = document.getElementById("platesList");
+    const newRow = createPlateRow(plateIdCounter++);
+    list.appendChild(newRow);
+  }
+
+  // Batmobile preset (placeholder values – replace with your real 6‑plate data)
+  function loadBatmobilePreset() {
+    const list = document.getElementById("platesList");
+    list.innerHTML = "";
+    plateIdCounter = 1;
+
+    document.getElementById("printName").value = "Batmobile Keychain";
+    document.getElementById("filamentType").value = "PLA";
+
+    const presetPlates = [
+      { name: "Batmobile Plate 1", time: 45, unit: "min", filament: 65 },
+      { name: "Batmobile Plate 2", time: 50, unit: "min", filament: 70 },
+      { name: "Batmobile Plate 3", time: 40, unit: "min", filament: 60 },
+      { name: "Batmobile Plate 4", time: 35, unit: "min", filament: 55 },
+      { name: "Batmobile Plate 5", time: 30, unit: "min", filament: 50 },
+      { name: "Batmobile Plate 6", time: 25, unit: "min", filament: 45 }
+    ];
+
+    presetPlates.forEach(p => {
+      const row = createPlateRow(plateIdCounter++);
+      const nameInput = row.querySelector(".plate-name-input");
+      const timeInput = row.querySelector(".plate-time-value");
+      const unitSelect = row.querySelector(".plate-time-unit");
+      const filamentInput = row.querySelector(".plate-filament-value");
+
+      nameInput.value = p.name;
+      timeInput.value = p.time;
+      unitSelect.value = p.unit;
+      filamentInput.value = p.filament;
+
+      list.appendChild(row);
+    });
+
+    updatePlatesTotals();
+  }
+
+  function initEvents() {
+    const inputIds = [
+      "printName",
+      "filamentType",
+      "filamentCostPerKg",
+      "filamentUsedGrams",
+      "printTimeHours",
+      "printerPowerWatts",
+      "electricityRate",
+      "profitMargin",
+      "extraCosts"
+    ];
+
+    inputIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", recalc);
+      el.addEventListener("change", recalc);
+    });
+
+    const profitMarginRange = document.getElementById("profitMarginRange");
+    const profitMarginInput = document.getElementById("profitMargin");
+
+    profitMarginRange.addEventListener("input", () => {
+      profitMarginInput.value = profitMarginRange.value;
+      recalc();
+    });
+
+    profitMarginInput.addEventListener("input", () => {
+      profitMarginRange.value = profitMarginInput.value || 0;
+      recalc();
+    });
+
+    const toggleEl = document.getElementById("toggleIncludeElectricity");
+    toggleEl.addEventListener("click", () => {
+      includeElectricityInLabor = !includeElectricityInLabor;
+      toggleEl.classList.toggle("on", includeElectricityInLabor);
+      recalc();
+    });
+
+    document.getElementById("roundPriceBtn").addEventListener("click", roundPrice);
+    document.getElementById("copySummaryBtn").addEventListener("click", copySummary);
+    document.getElementById("addPlateBtn").addEventListener("click", addPlateRow);
+    document.getElementById("loadBatmobilePresetBtn").addEventListener("click", loadBatmobilePreset);
+
+    addPlateRow();
+    recalc();
+  }
+
+  document.addEventListener("DOMContentLoaded", initEvents);
+</script>
+</body>
+</html>
